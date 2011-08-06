@@ -1,0 +1,91 @@
+require 'rack'
+require 'sprockets'
+require 'hike'
+require 'sass'
+
+module Tipsy
+  
+  class Server
+    
+    attr_reader :request
+    attr_reader :response
+      
+    def initialize      
+      @last_update = Time.now      
+    end
+    
+    def call(env)      
+      @request  = Request.new(env)
+      @response = Response.new
+      path      = request.path_info.to_s.sub(/^\//, '')
+      view      = Tipsy::View.new(path, request)
+      content   = view.render
+      content.nil? ? not_found : finish(content)
+    end
+    
+    private
+    
+    def finish(content)
+      [ 200, { 'Content-Type' => 'text/html' }, [content] ]
+    end
+    
+    def not_found
+      [ 400, { 'Content-Type' => 'text/html' }, [] ]
+    end
+    
+  end
+  
+  class AssetHandler < Sprockets::Environment    
+    def initialize
+      super(Tipsy.root) do |env|
+        env.static_root = Tipsy.options.asset_path
+      end
+      self.append_path "assets/javascripts"
+      self.append_path "assets/stylesheets"
+      self.append_path "assets/images"
+      self
+    end
+  end
+  
+  # From the rack/contrib TryStatic class
+  class StaticFile
+    attr_reader :app, :try_files, :static
+    
+    def initialize(app, options)
+      @app       = app
+      @try_files = ['', *options.delete(:try)]
+      @static    = ::Rack::Static.new(lambda { [404, {}, []] }, options)
+    end
+
+    def call(env)
+      orig_path = env['PATH_INFO']
+      found = nil
+      try_files.each do |path|
+        resp = static.call(env.merge!({'PATH_INFO' => orig_path + path}))
+        break if 404 != resp[0] && found = resp
+      end
+      found or app.call(env.merge!('PATH_INFO' => orig_path))
+    end
+  end
+    
+  
+  class Request < Rack::Request    
+    # Hash access to params
+    def params
+      @params ||= begin
+        hash = HashWithIndifferentAccess.new.update(Rack::Utils.parse_nested_query(query_string))
+        post_params = form_data? ? Rack::Utils.parse_nested_query(body.read) : {}
+        hash.update(post_params) unless post_params.empty?
+        hash
+      end
+    end    
+  end
+
+  class Response < Rack::Response
+    def body=(value)
+      value.respond_to?(:each) ? super(value) : super([value])
+    end
+  end
+  
+end
+

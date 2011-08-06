@@ -1,0 +1,16 @@
+class <%= classname %> < Tipsy::Application
+
+	# Configure assets to be precompiled
+	config.assets << "site.js"
+	config.assets << "screen.css"
+	
+	# The path where build files will go when compiled
+	# config.build_path = <%= File.join(root, 'build') %>
+	
+	# The path where public files exist (default root/public)
+	# config.public_path = <%= File.join(root, 'public') %>
+	
+	# The path where assets will be stored on build (default public_path/assets)
+	# config.asset_path = <%= File.join(root, 'assets') %>
+	
+end
