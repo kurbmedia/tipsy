@@ -23,7 +23,8 @@ module Tipsy
     
     def render
       unless template.nil?
-        tilt     = Tilt.new(template, nil, :outvar => '@_output_buffer')
+        handler  = Tilt[template] || Tilt::ErubisTemplate
+        tilt     = handler.new(template, nil, :outvar => '@_output_buffer')
         context  = Context.new(request)
         contents = unless layout.nil?
           wrapped  = Tilt.new(layout, nil, :outvar => '@_output_buffer')
@@ -62,3 +63,5 @@ module Tipsy
     
   end
 end
+
+Tilt.prefer Tilt::ErubisTemplate, 'erb'

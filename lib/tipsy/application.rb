@@ -1,6 +1,10 @@
 require 'rack'
 require 'tipsy/server'
 
+##
+# Base class for all applications. Handles configuration of options, 
+# and processing of command line arguments.
+# 
 module Tipsy
   class Application
     
@@ -9,11 +13,15 @@ module Tipsy
         
     def self.create(name = nil)
       raise "Missing project name for 'tipsy new'" unless name
-      Tipsy::Generator.create_project!(name)
+      Tipsy::Builder.build!(:project, name)
     end
     
     def self.build
-      Tipsy::Builder.new(self.config.build_path)
+      Tipsy::Builder.build!(:export)
+    end
+    
+    def self.deploy
+      Tipsy::Builder.build!(:remote)
     end
     
     def self.initialize!
@@ -31,19 +39,10 @@ module Tipsy
     end
     
     def initialize
+      require 'tipsy/helpers/sass'
+      @app = Tipsy::Server.init!
       
-      @app = Rack::Builder.new {
-        use Rack::CommonLogger
-        use Rack::ShowStatus
-        use Rack::ShowExceptions
-        use Tipsy::StaticFile, :root => Tipsy.options.public_path, :urls => %w[/]
-        run Rack::Cascade.new([
-        	Rack::URLMap.new({ "/#{File.basename(Tipsy.options.asset_path)}" => Tipsy::AssetHandler.new }),
-        	Tipsy::Server.new        	
-        ])
-      }
-      
-      puts "Tipsy #{Tipsy::VERSION} running on #{config.address}:#{config.port}"
+      Tipsy.logger.info("Tipsy #{Tipsy::VERSION} running on #{config.address}:#{config.port}")
       
       begin run_thin
       rescue LoadError
@@ -79,7 +78,7 @@ module Tipsy
     def run_webrick
       handler = Rack::Handler.get('webrick')
       handler.run app, server_opts do |server|
-        puts "Running Tipsy with Webrick. To use Mongrel or Thin, add them to your Gemfile"
+        puts "Running Tipsy with Webrick. To use Mongrel or Thin (recommended), add them to your Gemfile"
         trap("INT"){ server.shutdown }
       end
     end

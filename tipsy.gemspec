@@ -7,10 +7,10 @@ Gem::Specification.new do |s|
   s.name        = "tipsy"
   s.version     = Tipsy::VERSION
   s.authors     = ["Brent Kirby"]
-  s.email       = ["brent@kurbmedia.com"]
-  s.homepage    = ""
+  s.email       = ["info@kurbmedia.com"]
+  s.homepage    = "https://github.com/kurbmedia/tipsy"
   s.summary     = %q{A mini Rack application server for developing static sites.}
-  s.description = %q{Tipsy is a mini Rack application for working with static websites using Tilt, Compass, and Sprockets.}
+  s.description = %q{Tipsy is a mini Rack application for working with static websites using Tilt, and Sprockets.}
 
   s.rubyforge_project = "tipsy"
 

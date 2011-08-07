@@ -9,6 +9,19 @@ module Tipsy
     
     attr_reader :request
     attr_reader :response
+    
+    def self.init!
+      Rack::Builder.new {
+        use Rack::CommonLogger
+        use Rack::ShowStatus
+        use Rack::ShowExceptions
+        use Tipsy::StaticFile, :root => Tipsy.options.public_path, :urls => %w[/]
+        run Rack::Cascade.new([
+        	Rack::URLMap.new({ "/#{File.basename(Tipsy.options.asset_path)}" => Tipsy::AssetHandler.new }),
+        	Tipsy::Server.new        	
+        ])
+      }      
+    end
       
     def initialize      
       @last_update = Time.now      
@@ -37,8 +50,15 @@ module Tipsy
   
   class AssetHandler < Sprockets::Environment    
     def initialize
-      super(Tipsy.root) do |env|
-        env.static_root = Tipsy.options.asset_path
+      Tipsy.sprockets = super(Tipsy.root) do |env|
+        env.static_root    = Tipsy.options.asset_path
+        env.css_compressor = Tipsy::Compressors::CssCompressor.new
+        begin
+          require 'uglifier'          
+          env.js_compressor = Uglifier
+        rescue LoadError
+          env.js_compressor = Tipsy::Compressors::JavascriptCompressor.new
+        end
       end
       self.append_path "assets/javascripts"
       self.append_path "assets/stylesheets"
