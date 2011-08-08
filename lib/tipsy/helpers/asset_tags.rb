@@ -4,6 +4,7 @@ module Tipsy
       
       def javascript_include_tag(*files)        
         html_attrs = files.extract_options!
+        html_attrs.stringify_keys!
         files.map{ |file| 
           content_tag('script', '', {'src' => asset_path(path_with_ext(file, 'js'))}.merge!(html_attrs))
         }.join("\n")
@@ -11,8 +12,12 @@ module Tipsy
       
       def stylesheet_link_tag(*files)        
         html_attrs = files.extract_options!
+        html_attrs.reverse_merge!({          
+          :media => "screen"
+        }).stringify_keys!
+        
         files.map{ |file| 
-          content_tag('link', '', {'href' => asset_path(path_with_ext(file, 'css'))}.merge!(html_attrs))
+          content_tag('link', '', { 'href' => asset_path(path_with_ext(file, 'css')), 'rel' => "stylesheet" }.merge!(html_attrs))
         }.join("\n")
       end
       
