@@ -2,6 +2,10 @@ require 'tilt'
 require 'sass/engine'
 require 'compass'
 
+##
+# Most of this was extracted and modified from the sass-rails plugin, since most of the 
+# Sprockets functionality is the same.
+# 
 module Tipsy
   module Sass
     class Template < Tilt::ScssTemplate
