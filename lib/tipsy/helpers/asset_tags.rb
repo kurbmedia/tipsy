@@ -2,6 +2,12 @@ module Tipsy
   module Helpers
     module AssetTags
       
+      def image_tag(src, html_attrs = {})
+        html_attrs.stringify_keys!
+        html_attrs.reverse_merge!('alt' => File.basename(src))
+        tag(:img, html_attrs.merge('src' => asset_path(src)))
+      end
+      
       def javascript_include_tag(*files)        
         html_attrs = files.extract_options!
         html_attrs.stringify_keys!

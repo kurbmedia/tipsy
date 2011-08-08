@@ -51,7 +51,7 @@ module Tipsy
     def initialize
       Sprockets.register_engine '.scss', Tipsy::Sass::Template
       
-      Tipsy.sprockets = super(Tipsy.root) do |env|
+       super(Tipsy.root) do |env|
         env.static_root    = Tipsy.options.asset_path
         #env.css_compressor = Tipsy::Compressors::CssCompressor.new
         # begin
@@ -60,7 +60,8 @@ module Tipsy
         # rescue LoadError
         #   env.js_compressor = Tipsy::Compressors::JavascriptCompressor.new
         # end
-      end      
+      end 
+      Tipsy.sprockets = self
       configure_paths!
       self
     end
@@ -68,12 +69,25 @@ module Tipsy
     private
     
     def configure_paths!
-      require 'sass/plugin'      
+      require 'compass'
+      require 'sass/plugin'
+      
       append_path "assets/javascripts"
       append_path "assets/images"
       append_path "assets/stylesheets"
+      
+      compass_config = ::Compass::Configuration::Data.new("project")
+      compass_config.project_type   = :rails
+      compass_config.project_path   = Tipsy.root
+      compass_config.extensions_dir = Tipsy.root
+      compass_config.sass_dir       = File.join("assets", "stylesheets")            
+      
+      ::Sass::Plugin.engine_options.merge!(Compass.sass_engine_options)
+      
       Tipsy.options.assets.paths |= self.paths
+      
     end
+    
   end
   
   # From the rack/contrib TryStatic class
