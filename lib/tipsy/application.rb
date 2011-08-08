@@ -1,5 +1,4 @@
 require 'rack'
-require 'tipsy/server'
 
 ##
 # Base class for all applications. Handles configuration of options, 

@@ -17,6 +17,39 @@ module Tipsy
           @_output_buffer = orig_buffer
       end
       
+      def render(options = {})
+        options.symbolize_keys!
+        assert_valid_keys!(options, :template, :partial, :collection, :locals)
+        
+        if template = options.delete(:template)
+          _render_template(template, options)
+        elsif template = options.delete(:partial)
+          _render_template(template, options, true)
+        else
+          raise 'Render requires a :template or :partial option.'
+        end
+      end
+      
+      private
+      
+      def _render_template(name, options = {}, partial = false)
+        to_render = ( partial === true ? "_#{name}" : name )
+        to_render = view_trail.find(to_render)
+        unless to_render.nil?
+          local_vars = options.delete(:locals) || {}
+          results = Tilt[to_render].new(to_render, nil)
+          return results.render(self, local_vars)
+        end
+        raise "Missing #{ partial ? 'partial' : 'template' } #{name}."
+      end
+      
+      def assert_valid_keys!(hash, *keys)
+        left = hash.keys.reject{ |k| keys.include?(k) }
+        unless left.empty?
+          raise 'Invalid keys for hash: #{left.join(", ")}'
+        end
+      end
+      
     end      
   end
 end

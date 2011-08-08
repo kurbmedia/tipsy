@@ -1,7 +1,6 @@
 require 'rack'
 require 'sprockets'
 require 'hike'
-require 'sass'
 
 module Tipsy
   
@@ -50,20 +49,30 @@ module Tipsy
   
   class AssetHandler < Sprockets::Environment    
     def initialize
+      Sprockets.register_engine '.scss', Tipsy::Sass::Template
+      
       Tipsy.sprockets = super(Tipsy.root) do |env|
         env.static_root    = Tipsy.options.asset_path
-        env.css_compressor = Tipsy::Compressors::CssCompressor.new
-        begin
-          require 'uglifier'          
-          env.js_compressor = Uglifier
-        rescue LoadError
-          env.js_compressor = Tipsy::Compressors::JavascriptCompressor.new
-        end
-      end
-      self.append_path "assets/javascripts"
-      self.append_path "assets/stylesheets"
-      self.append_path "assets/images"
+        #env.css_compressor = Tipsy::Compressors::CssCompressor.new
+        # begin
+        #   require 'uglifier'          
+        #   env.js_compressor = Uglifier
+        # rescue LoadError
+        #   env.js_compressor = Tipsy::Compressors::JavascriptCompressor.new
+        # end
+      end      
+      configure_paths!
       self
+    end
+    
+    private
+    
+    def configure_paths!
+      require 'sass/plugin'      
+      append_path "assets/javascripts"
+      append_path "assets/images"
+      append_path "assets/stylesheets"
+      Tipsy.options.assets.paths |= self.paths
     end
   end
   

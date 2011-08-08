@@ -3,6 +3,9 @@ require 'tipsy/helpers'
 require 'hike'
 
 module Tipsy
+  ##
+  # Handles rendering of templates and layouts
+  # 
   class View
 
     attr_reader :content_type
@@ -25,7 +28,7 @@ module Tipsy
       unless template.nil?
         handler  = Tilt[template] || Tilt::ErubisTemplate
         tilt     = handler.new(template, nil, :outvar => '@_output_buffer')
-        context  = Context.new(request)
+        context  = Context.new(request, template, trail)
         contents = unless layout.nil?
           wrapped  = Tilt.new(layout, nil, :outvar => '@_output_buffer')
           contents = wrapped.render(context) do |*args|
@@ -48,20 +51,28 @@ module Tipsy
     def layout
       @layout ||= (trail.find(File.join(view_path, '_layout')) || trail.find('_layout'))
     end
-  
+    
+    ##
+    # A rendering context. This class is the context all views are stemmed from.
+    # 
     class Context
-      include Tipsy::Helpers            
+      include Tipsy::Helpers
+      attr_reader :request, :root, :template_file_name, :view_trail
       
-      attr_accessor :request, :content, :root
-      
-      def initialize(req)
-        @request = req, @root = Tipsy.root
-        super
+      def initialize(req, tpl, trail)
+        @request            = req
+        @root               = Tipsy.root
+        @template_file_name = tpl
+        @view_trail         = trail
+        __initialize_helpers
       end
-      
     end
     
   end
 end
 
-Tilt.prefer Tilt::ErubisTemplate, 'erb'
+begin
+  require 'erubis'
+  Tilt.prefer Tilt::ErubisTemplate, 'erb'
+rescue LoadError
+end

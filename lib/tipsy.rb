@@ -8,16 +8,20 @@ module Tipsy
   autoload :Application,  'tipsy/application'
   autoload :Server,       'tipsy/server'
   autoload :Responder,    'tipsy/handler'
-  autoload :View,         'tipsy/view'
   autoload :Helpers,      'tipsy/helpers'  
   autoload :Builder,      'tipsy/builder'
   autoload :Logger,       'tipsy/logger'
+  autoload :View,         'tipsy/view'
   
   module Compressors
     autoload :CssCompressor, 'tipsy/compressors/css'
     autoload :JavascriptCompressor, 'tipsy/compressors/javascript'
   end
-
+  
+  module Sass
+    autoload :Template, 'tipsy/sass/template'
+  end
+  
   mattr_accessor :root
   mattr_accessor :logger
   mattr_accessor :env
@@ -48,7 +52,7 @@ module Tipsy
     @@options ||= OpenStruct.new({
       :port         => 4000,
       :host         => '0.0.0.0',
-      :assets       => [],
+      :assets       => OpenStruct.new({ :paths => [], :precompile => [] }),
       :build_path   => File.join(Tipsy.root, 'build'),
       :public_path  => File.join(Tipsy.root, 'public'),
       :asset_path   => File.join(Tipsy.root, 'public', 'assets')
