@@ -11,7 +11,10 @@ module Tipsy
   autoload :Helpers,      'tipsy/helpers'  
   autoload :Builder,      'tipsy/builder'
   autoload :Logger,       'tipsy/logger'
-  autoload :View,         'tipsy/view'
+  
+  module View
+    autoload :Base, 'tipsy/view/base'
+  end
   
   module Compressors
     autoload :CssCompressor, 'tipsy/compressors/css'
