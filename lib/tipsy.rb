@@ -1,7 +1,7 @@
 require "tipsy/version"
 require "active_support/all"
 require 'optparse'
-require 'ostruct'
+require 'tipsy/configuration'
 
 module Tipsy
 
@@ -41,7 +41,6 @@ module Tipsy
     when 'serve' || 's' then 'run'
     else to_run
     end
-    
     args.shift
     parse_options!    
     Tipsy::Application.send(:"#{to_run}", *args)    
@@ -49,20 +48,17 @@ module Tipsy
   end
   
   def self.options
-    @@options ||= OpenStruct.new({
-      :port         => 4000,
-      :host         => '0.0.0.0',
-      :assets       => OpenStruct.new({ :paths => [], :precompile => [] }),
-      :build_path   => File.join(Tipsy.root, 'build'),
-      :public_path  => File.join(Tipsy.root, 'public'),
-      :asset_path   => File.join(Tipsy.root, 'public', 'assets')
-    })
+    @@options ||= Tipsy::Configuration.create!
+  end
+  
+  class << self
+    alias :config :options
   end
   
   private
   
-  def self.parse_options!    
-    
+  def self.parse_options!  
+  
     op = OptionParser.new do |opts|
       opts.banner = "Usage: tipsy [cmd] [options]"
       opts.separator ""

@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
   s.add_dependency("tilt", "~> 1.3")
   s.add_dependency("i18n", "~> 0.5")
   s.add_dependency("sass", "~> 3.1")
-  s.add_dependency("compass", "~> 11.5")
+  s.add_dependency("compass", "~> 0.11")
   s.add_dependency("activesupport", ">= 3.0")
   s.add_dependency('sprockets', '~> 2.0.0.beta.12')
   

@@ -27,11 +27,12 @@ module Tipsy
     end
     
     def call(env)      
-      @request  = Request.new(env)
-      @response = Response.new
-      path      = request.path_info.to_s.sub(/^\//, '')
-      view      = Tipsy::View.new(path, request)
-      content   = view.render
+      @request      = Request.new(env)
+      @response     = Response.new
+      path          = request.path_info.to_s.sub(/^\//, '')
+      view          = Tipsy::View.new(path)
+      view.request  = @request
+      content       = view.render
       content.nil? ? not_found : finish(content)
     end
     
@@ -62,30 +63,44 @@ module Tipsy
         # end
       end 
       Tipsy.sprockets = self
+      
       configure_paths!
+      configure_compass!
+      
       self
+    end
+    
+    def javascript_exception_response(exception)      
+      expire_index!
+      super(exception)
+    end
+
+    def css_exception_response(exception)      
+      expire_index!
+      super(exception)
     end
     
     private
     
     def configure_paths!
-      require 'compass'
-      require 'sass/plugin'
-      
       append_path "assets/javascripts"
       append_path "assets/images"
       append_path "assets/stylesheets"
-      
-      compass_config = ::Compass::Configuration::Data.new("project")
-      compass_config.project_type   = :rails
-      compass_config.project_path   = Tipsy.root
-      compass_config.extensions_dir = Tipsy.root
-      compass_config.sass_dir       = File.join("assets", "stylesheets")            
-      
-      ::Sass::Plugin.engine_options.merge!(Compass.sass_engine_options)
-      
       Tipsy.options.assets.paths |= self.paths
-      
+    end
+    
+    def configure_compass!
+      require 'compass'
+      require 'sass/plugin'
+
+      compass_config = ::Compass::Configuration::Data.new("project")
+      compass_options = Tipsy.options.compass
+      compass_options.members.each do |meth|
+        compass_config.send(:"#{meth}=", compass_options.send(meth))
+      end
+
+      Compass.add_project_configuration(compass_config)
+      ::Sass::Plugin.engine_options.merge!(Compass.sass_engine_options)
     end
     
   end

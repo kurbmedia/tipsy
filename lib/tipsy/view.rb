@@ -10,12 +10,12 @@ module Tipsy
 
     attr_reader :content_type
     attr_reader :file
-    attr_reader :request
     attr_reader :trail
     attr_reader :view_path
+
+    attr_accessor :request
     
-    def initialize(path, request)            
-      @request      = request
+    def initialize(path)            
       @content_type = 'text/html'
       @trail        = Hike::Trail.new(File.join(Tipsy.root, 'views'))      
       @view_path    = path
@@ -26,13 +26,19 @@ module Tipsy
     
     def render
       unless template.nil?
-        handler  = Tilt[template] || Tilt::ErubisTemplate
+        handler  = Tilt[template]
         tilt     = handler.new(template, nil, :outvar => '@_output_buffer')
         context  = Context.new(request, template, trail)
-        contents = unless layout.nil?
-          wrapped  = Tilt.new(layout, nil, :outvar => '@_output_buffer')
-          contents = wrapped.render(context) do |*args|
-            tilt.render(context, *args)
+        contents = tilt.render(context);
+        
+        unless layout.nil?
+          wrapped  = Tilt.new(layout, nil, :outvar => '@_output_buffer')          
+          # Remap provided locals
+          locals  = context.send(:instance_variables).inject({}) do |hash, var|
+            hash.merge!(var.to_s.sub("@", '') => context.send(:instance_variable_get, var))
+          end
+          contents = wrapped.render(context, locals) do |*args|
+            contents
           end
         else
           tilt.render(context)

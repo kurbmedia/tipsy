@@ -23,7 +23,7 @@ module Tipsy
         }).stringify_keys!
         
         files.map{ |file| 
-          content_tag('link', '', { 'href' => asset_path(path_with_ext(file, 'css')), 'rel' => "stylesheet" }.merge!(html_attrs))
+          tag('link', { 'href' => asset_path(path_with_ext(file, 'css')), 'rel' => "stylesheet" }.merge!(html_attrs))
         }.join("\n")
       end
       

@@ -13,7 +13,7 @@ class <%= classname %> < Tipsy::Application
 	# The path where public files exist (default root/public)
 	# config.public_path = <%= File.join(root, 'public') %>
 	
-	# The path where assets will be stored on build (default public_path/assets)
-	# config.asset_path = <%= File.join(root, 'assets') %>
+	# The path where assets will be stored on build (default build_path/assets)
+	# config.asset_path = <%= Tipsy.options.asset_path %>
 	
 end
