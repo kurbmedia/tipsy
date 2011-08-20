@@ -13,7 +13,12 @@ module Tipsy
       end
       
       def run(args, stdin)
-        
+        args   = [args].flatten    
+        to_run = args.first
+        to_run = 'serve'  if [nil, 'run', 's'].include?(to_run)
+        to_run = 'create' if to_run == 'new'
+        args.shift
+        parse_options!
       end
       
     end
