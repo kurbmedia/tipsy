@@ -1,15 +1,16 @@
 require "active_support/all"
 require 'active_support/inflector'
 require 'tipsy/version'
-require 'tipsy/logger'
+require 'tipsy/logging'
 
 module Tipsy
   mattr_accessor :root
   
-  autoload :View,     'tipsy/view/base'
-  autoload :Server,   'tipsy/server'
-  autoload :Helpers,  'tipsy/helpers'
-  autoload :Site,     'tipsy/site'
+  autoload :View,           'tipsy/view/base'
+  autoload :Server,         'tipsy/server'
+  autoload :Helpers,        'tipsy/helpers'
+  autoload :Site,           'tipsy/site'
+  autoload :ServerLogger,   'tipsy/loggers/server'
   
   module Compressors
     autoload :Javascipt, 'tipsy/compressors/javascript'

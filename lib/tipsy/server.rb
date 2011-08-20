@@ -4,6 +4,7 @@ require 'tipsy/handlers/all'
 
 module Tipsy  
   class Server
+    include Tipsy::Logging
     
     attr_reader :request
     attr_reader :response
@@ -12,7 +13,11 @@ module Tipsy
       @last_update = Time.now      
     end
     
-    def call(env)      
+    def call(env)
+      
+      logger.info('')
+      logger.info("Processing #{env['PATH_INFO']} at #{Time.now.strftime("%m-%d-%Y %H:%M:%S")}")
+            
       @request      = Request.new(env)
       @response     = Response.new
       path          = request.path_info.to_s.sub(/^\//, '')

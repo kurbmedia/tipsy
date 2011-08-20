@@ -12,5 +12,16 @@ module Tipsy
     include Tag 
     include AssetPaths
     include AssetTags
+    
+    def self._register_local(klass)
+      module_names = []
+      includes = Dir.glob(File.expand_path(Tipsy.root) << "/helpers/*.rb").inject([]) do |arr, helper|
+        module_names << File.basename(helper, '.rb').classify
+        arr.concat File.open(helper).readlines          
+      end
+      module_names.each{ |mod| includes.concat(["\n include #{mod}"]) }
+      klass.class_eval(includes.join("\n"))
+    end
+    
   end
 end

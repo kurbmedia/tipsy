@@ -7,7 +7,7 @@ module Tipsy
 
     def initialize(app, options)
       @app       = app
-      @try_files = ['', *options.delete(:try)]
+      @try_files = ['', *options.delete(:try)]      
       @static    = ::Rack::Static.new(lambda { [404, {}, []] }, options)
     end
 

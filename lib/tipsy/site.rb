@@ -11,6 +11,10 @@ module Tipsy
         @config ||= ::ActiveSupport::OrderedOptions.new
       end
       
+      def configure(&block)
+        yield config if block_given?
+      end
+      
       def run(args, stdin)
         args   = [args].flatten    
         to_run = args.first
@@ -25,6 +29,7 @@ module Tipsy
     def initialize(root = nil, env = nil)
       @root ||= Tipsy.root
       @env  ||= Tipsy.env
+      require 'tipsy/site/config'
     end
     
     def config
@@ -46,15 +51,15 @@ module Tipsy
       require 'rack'
 
       app = Rack::Builder.new {
-        use Rack::CommonLogger
+        use Rack::Reloader
         use Rack::ShowStatus
         use Tipsy::Server::ShowExceptions
-        use Tipsy::StaticHandler, :root => Site.config.public_path, :urls => %w[/]
+        use Tipsy::StaticHandler, :root => Tipsy::Site.config.public_path, :urls => %w[/]
         run Rack::Cascade.new([
         	Rack::URLMap.new(Tipsy::AssetHandler.to_url_map),
         	Tipsy::Server.new
         ])
-      }
+      }.to_app
       
       Runner.new(app).run      
       
@@ -101,9 +106,5 @@ module Tipsy
         end
       end
     end
-
-    
   end
 end
-
-require 'tipsy/site/config'
