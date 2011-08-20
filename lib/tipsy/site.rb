@@ -1,6 +1,5 @@
+require 'active_support/ordered_options'
 require 'ostruct'
-require 'tipsy/handlers/all'
-require 'tipsy/site/config'
 require 'tipsy/site/utils'
 
 module Tipsy
@@ -9,7 +8,7 @@ module Tipsy
     
     class << self
       def config
-        @config ||= Config.new
+        @config ||= ::ActiveSupport::OrderedOptions.new
       end
       
       def run(args, stdin)
@@ -17,8 +16,8 @@ module Tipsy
         to_run = args.first
         to_run = 'serve'  if [nil, 'run', 's'].include?(to_run)
         to_run = 'create' if to_run == 'new'
-        args.shift
-        parse_options!
+        args.shift        
+        self.new.send(:"#{to_run}!")
       end
       
     end
@@ -50,7 +49,7 @@ module Tipsy
         use Rack::CommonLogger
         use Rack::ShowStatus
         use Tipsy::Server::ShowExceptions
-        use Tipsy::StaticHandler, :root => Tipsy.options.public_path, :urls => %w[/]
+        use Tipsy::StaticHandler, :root => Site.config.public_path, :urls => %w[/]
         run Rack::Cascade.new([
         	Rack::URLMap.new(Tipsy::AssetHandler.to_url_map),
         	Tipsy::Server.new
@@ -60,3 +59,5 @@ module Tipsy
     
   end
 end
+
+require 'tipsy/site/config'

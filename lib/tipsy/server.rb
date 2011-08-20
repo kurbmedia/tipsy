@@ -1,5 +1,6 @@
 require 'rack'
 require 'hike'
+require 'tipsy/handlers/all'
 
 module Tipsy  
   class Server
