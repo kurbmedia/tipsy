@@ -45,7 +45,7 @@ module Tipsy
       require 'tipsy/server'
       require 'rack'
 
-      Rack::Builder.new {
+      app = Rack::Builder.new {
         use Rack::CommonLogger
         use Rack::ShowStatus
         use Tipsy::Server::ShowExceptions
@@ -55,7 +55,53 @@ module Tipsy
         	Tipsy::Server.new
         ])
       }
+      
+      Runner.new(app).run      
+      
     end
+    
+    class Runner
+      attr_reader :app
+      
+      def initialize(a); @app = a; end
+      def options
+        server_options = { :Port => Site.config.port, :Host => Site.config.address }
+      end
+      def run
+        Tipsy.logger.info("Tipsy #{Tipsy::VERSION} running on #{Site.config.address}:#{Site.config.port}")
+        begin run_thin
+        rescue LoadError
+          begin run_mongrel
+          rescue LoadError
+            run_webrick
+          end
+        end
+      end
+      def run_thin
+        handler = Rack::Handler.get('thin')
+        handler.run app, options do |server|
+          puts "Running Tipsy with Thin (#{Thin::VERSION::STRING})."
+        end
+        exit(0)
+      end
+
+      def run_mongrel
+        handler = Rack::Handler.get('mongrel')
+        handler.run app, options do |server|
+          puts "Running Tipsy with Mongrel (#{Mongrel::Const::MONGREL_VERSION})."
+        end
+        exit(0)
+      end
+
+      def run_webrick
+        handler = Rack::Handler.get('webrick')
+        handler.run app, server_opts do |server|
+          puts "Running Tipsy with Webrick. To use Mongrel or Thin (recommended), add them to your Gemfile"
+          trap("INT"){ server.shutdown }
+        end
+      end
+    end
+
     
   end
 end

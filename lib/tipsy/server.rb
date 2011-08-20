@@ -16,8 +16,7 @@ module Tipsy
       @request      = Request.new(env)
       @response     = Response.new
       path          = request.path_info.to_s.sub(/^\//, '')
-      view          = Tipsy::View.new(path)
-      view.request  = @request
+      view          = Tipsy::View.new(path, request)
       content       = view.render
       content.nil? ? not_found : finish(content)
     end
@@ -61,7 +60,7 @@ module Tipsy
       end
       
       def template
-        @@template ||= File.readlines(File.expand_path("./templates/", __FILE__) << "/exception.html").join("\n")
+        @@template ||= File.open(File.join(File.dirname(__FILE__), 'templates', 'exception.html'), 'r').read
       end
 
       def call(env)
@@ -78,7 +77,7 @@ module Tipsy
           end
           env["rack.errors"] = errors
           
-          [500, { "Content-Type" => content_type, "Content-Length" => Rack::Utils.bytesize(body.join).to_s }, [body]]
+          [500, { "Content-Type" => content_type, "Content-Length" => Rack::Utils.bytesize(body.join).to_s }, body]
         end
       end
       
