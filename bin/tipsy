@@ -18,4 +18,4 @@ if File.exists?(File.join(File.expand_path('.'), 'Gemfile'))
 end
 
 Tipsy.root = File.expand_path('.')
-Tipsy.run_command(ARGV, STDIN)
+Tipsy::Site.run(ARGV, STDIN)

@@ -1,27 +1,12 @@
 require 'rack'
-require 'sprockets'
 require 'hike'
 
-module Tipsy
-  
+module Tipsy  
   class Server
     
     attr_reader :request
     attr_reader :response
-    
-    def self.init!
-      Rack::Builder.new {
-        use Rack::CommonLogger
-        use Rack::ShowStatus
-        use Rack::ShowExceptions
-        use Tipsy::StaticFile, :root => Tipsy.options.public_path, :urls => %w[/]
-        run Rack::Cascade.new([
-        	Rack::URLMap.new({ "/#{File.basename(Tipsy.options.asset_path)}" => Tipsy::AssetHandler.new }),
-        	Tipsy::Server.new        	
-        ])
-      }      
-    end
-      
+
     def initialize      
       @last_update = Time.now      
     end
@@ -46,104 +31,69 @@ module Tipsy
       [ 400, { 'Content-Type' => 'text/html' }, [] ]
     end
     
-  end
-  
-  class AssetHandler < Sprockets::Environment    
-    def initialize
-      Sprockets.register_engine '.scss', Tipsy::Sass::Template
-      
-       super(Tipsy.root) do |env|
-        env.static_root    = Tipsy.options.asset_path
-        #env.css_compressor = Tipsy::Compressors::CssCompressor.new
-        # begin
-        #   require 'uglifier'          
-        #   env.js_compressor = Uglifier
-        # rescue LoadError
-        #   env.js_compressor = Tipsy::Compressors::JavascriptCompressor.new
-        # end
-      end 
-      Tipsy.sprockets = self
-      
-      configure_paths!
-      configure_compass!
-      
-      self
+    class Request < Rack::Request    
+      # Hash access to params
+      def params
+        @params ||= begin
+          hash = HashWithIndifferentAccess.new.update(Rack::Utils.parse_nested_query(query_string))
+          post_params = form_data? ? Rack::Utils.parse_nested_query(body.read) : {}
+          hash.update(post_params) unless post_params.empty?
+          hash
+        end
+      end    
     end
     
-    def javascript_exception_response(exception)      
-      expire_index!
-      super(exception)
+    class Response < Rack::Response
+      def body=(value)
+        value.respond_to?(:each) ? super(value) : super([value])
+      end
     end
+    
+    class ShowExceptions < Rack::ShowExceptions
+      @@eats_errors = Object.new
+      def @@eats_errors.flush(*) end
+      def @@eats_errors.puts(*) end
 
-    def css_exception_response(exception)      
-      expire_index!
-      super(exception)
-    end
-    
-    private
-    
-    def configure_paths!
-      append_path "assets/javascripts"
-      append_path "assets/images"
-      append_path "assets/stylesheets"
-      Tipsy.options.assets.paths |= self.paths
-    end
-    
-    def configure_compass!
-      require 'compass'
-      require 'sass/plugin'
-
-      compass_config = ::Compass::Configuration::Data.new("project")
-      compass_options = Tipsy.options.compass
-      compass_options.members.each do |meth|
-        compass_config.send(:"#{meth}=", compass_options.send(meth))
+      def initialize(app)
+        @app      = app
+        @template = ERB.new(template)
+      end
+      
+      def template
+        @@template ||= File.readlines(File.expand_path("./templates/", __FILE__) << "/exception.html").join("\n")
       end
 
-      Compass.add_project_configuration(compass_config)
-      ::Sass::Plugin.engine_options.merge!(Compass.sass_engine_options)
-    end
-    
-  end
-  
-  # From the rack/contrib TryStatic class
-  class StaticFile
-    attr_reader :app, :try_files, :static
-    
-    def initialize(app, options)
-      @app       = app
-      @try_files = ['', *options.delete(:try)]
-      @static    = ::Rack::Static.new(lambda { [404, {}, []] }, options)
-    end
-
-    def call(env)
-      orig_path = env['PATH_INFO']
-      found = nil
-      try_files.each do |path|
-        resp = static.call(env.merge!({'PATH_INFO' => orig_path + path}))
-        break if 404 != resp[0] && found = resp
+      def call(env)
+        begin
+          @app.call(env)
+        rescue Exception => e
+          errors, env["rack.errors"] = env["rack.errors"], @@eats_errors
+          if respond_to?(:prefers_plain_text?) and prefers_plain_text?(env)
+            content_type = "text/plain"
+            body = [dump_exception(e)]
+          else
+            content_type = "text/html"
+            body = pretty(env, e)
+          end
+          env["rack.errors"] = errors
+          
+          [500, { "Content-Type" => content_type, "Content-Length" => Rack::Utils.bytesize(body.join).to_s }, [body]]
+        end
       end
-      found or app.call(env.merge!('PATH_INFO' => orig_path))
-    end
-  end
-    
-  
-  class Request < Rack::Request    
-    # Hash access to params
-    def params
-      @params ||= begin
-        hash = HashWithIndifferentAccess.new.update(Rack::Utils.parse_nested_query(query_string))
-        post_params = form_data? ? Rack::Utils.parse_nested_query(body.read) : {}
-        hash.update(post_params) unless post_params.empty?
-        hash
+      
+      def frame_class(frame)
+        if frame.filename =~ /lib\/tipsy.*\.rb/
+          "framework"
+        elsif defined?(Gem) && frame.filename.include?(Gem.dir) || frame.filename =~ /\/bin\/(\w+)$/
+          "system"
+        else 
+          "app"
+        end
       end
-    end    
+      
+    end
+    
   end
 
-  class Response < Rack::Response
-    def body=(value)
-      value.respond_to?(:each) ? super(value) : super([value])
-    end
-  end
-  
 end
 
