@@ -41,6 +41,10 @@ module Tipsy
     config.compile.assets    = ['screen.css', 'site.js']
     config.compile.preserve  = [".svn", ".gitignore", ".git"]
     config.compile.skip      = []
+    
+    
+    config.compile.enable_rewrite = true
+    config.compile.rewrite_mode   = :htaccess
 
     def self.configure!
       @_callbacks = { :before => [], :after => [] }
