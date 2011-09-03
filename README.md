@@ -16,7 +16,9 @@ which would error normally. By doing so it should make integration with any numb
 ## Usage
 
 **Creating** To create a new site run `tipsy new name_of_site` to generate a new site in the current directory.
+
 **Compiling** To compile the site into a production-ready state, run `tipsy compile` from the site's root directory.
+
 **Serving** Simply run `tipsy` from the site root. Its recommended to add Thin or Mongrel to your Gemfile but Webrick will be used as a fallback.
 
 Running the site generator should provide all of the configuration and setup options you would need to get started. Check out config.rb in the created 
