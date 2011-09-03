@@ -1,0 +1,27 @@
+# Configure deployment options here.
+# Only the default is required for deployment, specify separate locations as needed to
+# deploy to multiple servers.
+#
+# Options:
+# server_type: Either apache or nginx.
+# scm: One of subversion, git, or simply false. (experimental)
+# deploy_to: Where the deployed files should be placed. 
+# deploy_via: One of ftp, sftp, or ssh. For scm deployments, ssh is required. S3 support coming in a future release
+#
+
+defaults: &defaults
+  server_type: "apache"
+  scm: false
+  deploy_to: ""
+  deploy_via: "ftp"  
+  port: 22
+  username: "deploy"
+
+default:
+  <<: *defaults
+  host: "ftp.somewhere.com"
+
+# setup a second location
+#server2:
+#  <<: *defaults
+  

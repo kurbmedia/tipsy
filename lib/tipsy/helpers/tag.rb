@@ -1,6 +1,5 @@
 module Tipsy
-  module Helpers
-    
+  module Helpers    
     module Tag
       include Capture
       
@@ -8,9 +7,9 @@ module Tipsy
         "<#{name}#{make_attributes(html_attrs)}#{open ? ">" : " />"}"
       end
       
-      def content_tag(name, content = nil, html_attrs = {}, &block)
+      def content_tag(name, content = nil, html_attrs = {}, &capt)
         buffer = "<#{name}#{make_attributes(html_attrs)}>"
-        content = capture(&block) if block_given?
+        content = capture(&capt) if block_given?
         "<#{name}#{make_attributes(html_attrs)}>#{content}</#{name}>"
       end
       
@@ -34,9 +33,7 @@ module Tipsy
           attrs << "#{key}=#{value.inspect}"
         end
         (attrs.empty? ? "" : " #{attrs.join(" ")}")
-      end
-      
-    end
-    
+      end      
+    end    
   end
 end

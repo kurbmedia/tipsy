@@ -5,3 +5,4 @@ pkg/*
 .DS_Store
 .rvmrc
 .sass-cache/*
+old/*

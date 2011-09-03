@@ -5,6 +5,8 @@ if File.file?(libdir + '/tipsy/version.rb')
   $LOAD_PATH.unshift(libdir)
 end
 
+ENV['TIPSY_ROOT'] ||= File.expand_path('.')
+
 begin
   require 'tipsy'
 rescue LoadError
@@ -17,5 +19,5 @@ if File.exists?(File.join(File.expand_path('.'), 'Gemfile'))
   Bundler.require(:default)
 end
 
-Tipsy.root = File.expand_path('.')
-Tipsy::Site.run(ARGV, STDIN)
+require 'tipsy/runner'
+Tipsy::Runner.new(ARGV, STDIN)

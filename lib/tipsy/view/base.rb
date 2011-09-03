@@ -1,95 +1,50 @@
-require 'hike'
-require 'tilt'
-require 'tipsy/view/errors'
-
 module Tipsy
-  class View
-    include Tipsy::Logging
-    
-    attr_reader :view_path, :request
-    attr_internal :contents
-    
-    def initialize(path, req)
-      @view_path = path
-      @view_path = "." if path.to_s.blank?
-      @request   = req
-    end
-    
-    def view_context
-      @_view_context ||= Context.new(request)
-    end
-    
-    def render
-      raise TemplateMissing.new("Could not find a template for path #{view_path}") and return if _template.nil?
-      return nil unless _template      
+  module View
+    class Base
       
-      handler  = Tilt[_template]
-      tilt     = handler.new(_template, nil, :outvar => '@_output_buffer')
-        
-      benchmark("Rendered #{_template.sub(Tipsy.root, '')}") do
-        @contents = tilt.render(view_context)
+      attr_reader :lookup_context, :request, :response, :view_context
+      
+      def initialize(request, response)
+        @request  = request
+        @response = response
+        @lookup_context = Tipsy::View::Path.new        
       end
-      raise LayoutMissing.new("Missing layout '#{view_context.layout}'") and return if _layout.nil?
+      
+      def render
         
-      if _layout
-        wrapped  = Tilt[_layout].new(_layout, nil, :outvar => '@_output_buffer')          
-        benchmark("Rendered #{_layout.sub(Tipsy.root, '')}") do
-          @contents = wrapped.render(view_context) do |*args|
-            @contents
+        template      = lookup_context.locate_template(current_path)        
+        @view_context = Tipsy::View::Context.new(request, lookup_context, File.dirname(template), lookup_context)
+        
+        handler  = Tilt[template]
+        tilt     = handler.new(template, nil, :outvar => '@output_buffer')      
+        result   = tilt.render(view_context)
+        
+        unless view_context.layout == false
+          layout = lookup_context.locate_layout(view_context.layout) 
+          raise Tipsy::View::LayoutMissing.new("Missing layout '#{view_context.layout}'") and return if layout.nil?
+          wrapped = Tilt[layout].new(layout, nil, :outvar => '@output_buffer')          
+          result  = wrapped.render(view_context) do |*args|
+            result
           end
-        end          
-      end
-      logger.info("")
-      @contents
-    end
-    
-    private
-    
-    def _layout
-      return false if view_context.layout.nil? || view_context.layout === false
-      @_layout ||= Finder.new('layouts').find(view_context.layout)
-    end
-    
-    def _lookup_context
-      @_lookup_context ||= Finder.new
-    end
-
-    def _template
-      @_template ||= (_lookup_context.find(view_path) || _lookup_context.find(File.join(view_path, "index")))
-    end
-    
-    class Context
-      include Tipsy::Helpers
-      attr_reader :request
-      
-      def initialize(req)
-        @request = req
-        @layout  = 'default'
-        Tipsy::Helpers._register_local(self)
+        end
+        
+        generate_response(result)
+        
       end
       
-      def layout(set = nil)
-        return @layout unless set
-        @layout = set
-        nil
+      private
+      
+      def current_path
+        @_current_path ||= request.path_info.to_s.sub(/^\//, '')
       end
-    end
-    
-    class Finder
-      attr_accessor :trail
-      def initialize(base = 'views')
-        @trail = Hike::Trail.new(File.join(Tipsy.root, base))
-        @trail.append_path('.')
-        @trail.append_extensions '.erb','.html', '.json', '.xml'
+      
+      def generate_response(content)
+        response.status = ( content.nil? ? 404 : 200)
+        response.headers['content-type'] = "text/html"
+        response.body = content
+        response
       end
-      delegate :find, :to => :trail
+      
     end
-    
   end
-end
-
-begin
-  require 'erubis'
-  Tilt.prefer Tilt::ErubisTemplate, 'erb'
-rescue LoadError
 end

@@ -3,9 +3,9 @@ $:.push File.expand_path("../lib", __FILE__)
 require "tipsy/version"
 
 Gem::Specification.new do |s|
-  
   s.name        = "tipsy"
   s.version     = Tipsy::VERSION
+  s.authors     = ["Brent Kirby"]
   s.authors     = ["Brent Kirby"]
   s.email       = ["info@kurbmedia.com"]
   s.homepage    = "https://github.com/kurbmedia/tipsy"
@@ -19,13 +19,16 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
   
-  s.add_dependency("rack", "~> 1.2")
-  s.add_dependency("rack-test", "~> 0.5")
+  s.add_dependency("rack", "~> 1.3")  
+  s.add_dependency("rack-test", "~> 0.6")
   s.add_dependency("tilt", "~> 1.3")
-  s.add_dependency("i18n", "~> 0.5")
+  s.add_dependency("i18n", "~> 0.6")
   s.add_dependency("sass", "~> 3.1")
-  s.add_dependency("compass", "~> 0.11")
-  s.add_dependency("activesupport", ">= 3.0")
-  s.add_dependency('sprockets', '~> 2.0.0.beta.12')
+  s.add_dependency("activesupport", ">= 3.1")
+  s.add_dependency('sprockets', '~> 2.0')
+  s.add_dependency("hike", "~> 1.2")
+  s.add_dependency("erubis", "~> 2.7")
+    
+  s.add_development_dependency("minitest", "~> 2.5")
   
 end

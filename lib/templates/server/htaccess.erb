@@ -1,0 +1,14 @@
+##################################################################
+# Basic rewriting to avoid file extensions where the
+# result is a basic html page.
+##################################################################
+
+# For IE .htc files
+AddType text/x-component .htc
+
+RewriteEngine on
+RewriteBase /
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ $1.html [L,QSA]

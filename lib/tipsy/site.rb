@@ -1,110 +1,84 @@
-require 'active_support/ordered_options'
-require 'ostruct'
-require 'tipsy/site/utils'
+require 'active_support/configurable'
 
 module Tipsy
+  
   class Site
-    attr_reader :env, :root
+    include ActiveSupport::Configurable
+    config_accessor :asset_path, :compile_to, :css_path, :javascripts_path, :images_path, :fonts_path,
+                    :public_path, :load_paths, :compile_to, :compile
+    ##
+    # Site configuration options
+    # 
+    # General:
+    # port: The port in which the server should run
+    # address: The address on which the server should run
+    # public_path: Path to the public files/assets
+    # 
+    # Assets:
+    # asset_path: The path in which assets should be preserved
+    # assets.paths: Paths in which sprockets will look for assets    
+    # assets.javascripts_path: Path in which javascript files should be served. Helper methods will use this path
+    # assets.images_path: Path in which image assets should be served. Helper methods will use this path
+    # assets.css_path: Path in which stylesheets should be served. Helper methods will use this path
+    # 
+    # Compiling:
+    # compile_path: The directory in which the site will be compiled
+    # compile.preserve: An array of files or directories that will be preserved when the compile folder is rebuilt.
     
-    class << self
-      def config
-        @config ||= ::ActiveSupport::OrderedOptions.new
-      end
-      
-      def configure(&block)
-        yield config if block_given?
-      end
-      
-      def run(args, stdin)
-        args   = [args].flatten    
-        to_run = args.first
-        to_run = 'serve'  if [nil, 'run', 's'].include?(to_run)
-        to_run = 'create' if to_run == 'new'
-        args.shift        
-        self.new.send(:"#{to_run}!")
-      end
-      
-    end
+    config.port       = 4000
+    config.address    = '0.0.0.0'
     
-    def initialize(root = nil, env = nil)
-      @root ||= Tipsy.root
-      @env  ||= Tipsy.env
-      require 'tipsy/site/config'
-    end
+    config.public_path       = File.join(Tipsy.root, 'public')
+    config.load_paths        = ::ActiveSupport::OrderedOptions.new( 'assets' => [] )
+    config.asset_path        = '/assets'
+    config.images_path       = asset_path
+    config.fonts_path        = "/fonts"
+    config.javascripts_path  = asset_path
+    config.css_path          = asset_path
+    config.compile_to        = File.join(Tipsy.root, 'compiled')
     
-    def config
-      self.class.config
-    end
-    
-    def create!
-      require 'tipsy/site/creator'
-      SiteCreator.new(self)
-    end
-    
-    def compile!
-      require 'tipsy/site/compiler'
-      SiteCompiler.new(self)
-    end
-    
-    def serve!
-      require 'tipsy/server'
-      require 'rack'
+    config.compile           = ::ActiveSupport::OrderedOptions.new
+    config.compile.assets    = ['screen.css', 'site.js']
+    config.compile.preserve  = [".svn", ".gitignore", ".git"]
+    config.compile.skip      = []
 
-      app = Rack::Builder.new {
-        use Rack::Reloader
-        use Rack::ShowStatus
-        use Tipsy::Server::ShowExceptions
-        use Tipsy::StaticHandler, :root => Tipsy::Site.config.public_path, :urls => %w[/]
-        run Rack::Cascade.new([
-        	Rack::URLMap.new(Tipsy::AssetHandler.to_url_map),
-        	Tipsy::Server.new
-        ])
-      }.to_app
-      
-      Runner.new(app).run      
+    def self.configure!
+      @_callbacks = { :before => [], :after => [] }
+      local_config = File.join(Tipsy.root, 'config.rb')
+      if File.exists?(local_config)
+        class_eval(File.open(local_config).readlines.join("\n"))
+      end
       
     end
     
-    class Runner
-      attr_reader :app
-      
-      def initialize(a); @app = a; end
-      def options
-        server_options = { :Port => Site.config.port, :Host => Site.config.address }
-      end
-      def run
-        Tipsy.logger.info("Tipsy #{Tipsy::VERSION} running on #{Site.config.address}:#{Site.config.port}")
-        begin run_thin
-        rescue LoadError
-          begin run_mongrel
-          rescue LoadError
-            run_webrick
+    ##
+    # Callback support
+    # 
+    [:compile].each do |callback|
+      class_eval <<-METHOD, __FILE__, __LINE__ + 1
+        def self.before_#{callback}(&block)
+          if block_given?
+            @_callbacks[:before] << block
+          else
+            @_callbacks[:before].each(&:call)
           end
         end
-      end
-      def run_thin
-        handler = Rack::Handler.get('thin')
-        handler.run app, options do |server|
-          puts "Running Tipsy with Thin (#{Thin::VERSION::STRING})."
-        end
-        exit(0)
-      end
 
-      def run_mongrel
-        handler = Rack::Handler.get('mongrel')
-        handler.run app, options do |server|
-          puts "Running Tipsy with Mongrel (#{Mongrel::Const::MONGREL_VERSION})."
+        def self.after_#{callback}(&block)
+          if block_given?
+            @_callbacks[:after] << block
+          else
+            @_callbacks[:after].each(&:call)
+          end
         end
-        exit(0)
-      end
-
-      def run_webrick
-        handler = Rack::Handler.get('webrick')
-        handler.run app, server_opts do |server|
-          puts "Running Tipsy with Webrick. To use Mongrel or Thin (recommended), add them to your Gemfile"
-          trap("INT"){ server.shutdown }
-        end
-      end
+      METHOD
     end
+    
+    
+    def initialize
+      @_callbacks = {}
+    end
+          
   end
+  
 end
