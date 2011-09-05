@@ -26,7 +26,7 @@ module Tipsy
       # 
       def copy_file(source, destination)
         return true if skip_file?(source)
-        log_action("create", destination)
+        log_action("copy", destination)
         ::FileUtils.cp(source, destination)
       end
 
@@ -35,8 +35,8 @@ module Tipsy
       #
       def copy_folder(dirname)
         return true if skip_path?(dirname)
-        log_action("create", dirname)
-        ::FileUtils.mkdir(dirname)
+        log_action("copy", dirname)
+        ::FileUtils.mkdir_p(dirname)
       end
 
       ##
@@ -49,7 +49,8 @@ module Tipsy
       end
       
       def make_file(path, content)
-        ::File.new(path, 'w').puts(content)
+        ::FileUtils.touch(path) unless ::File.exists?(path)
+        ::File.open(path, 'w').puts(content)
       end
       
       def rm_rf(path)
@@ -107,7 +108,13 @@ module Tipsy
       end
       
       def log_action(name, action)
-        ::Tipsy.logger.action(name, action)
+        ::Tipsy.logger.action(name, action.to_s.gsub(Tipsy.root, ""))
+      end
+      
+      def normalize_path(pname)
+        pname = ::Pathname.new(pname) if pname.is_a?(String)
+        return pname if pname.absolute?
+        ::Pathname.new(::File.join(Tipsy.root, pname.to_s))
       end
       
     end

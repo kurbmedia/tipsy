@@ -5,16 +5,17 @@ class CompilerTest < ActiveSupport::TestCase
   
   def setup
     Tipsy::Runners::Compiler.send(:include, Tipsy::Utils::SystemTest)
+    Tipsy::Utils::Tree.send(:include, Tipsy::Utils::SystemTest)
     @compiler = Tipsy::Runners::Compiler.new
     Tipsy::Site.configure!
   end
   
   test "Ensure source path is set" do
-    compiler.source_path.should == Tipsy::Site.config.public_path    
+    compiler.source_path.should == Pathname.new(Tipsy::Site.config.public_path)    
   end
   
   test "Ensure destination path is set" do
-    compiler.dest_path.should == Tipsy::Site.config.compile_to
+    compiler.dest_path.should == Pathname.new(Tipsy::Site.config.compile_to)
   end
   
   test "An option exists to skip specific files and folders on compile" do
@@ -25,19 +26,7 @@ class CompilerTest < ActiveSupport::TestCase
   test "Ensure skipped directory is not removed" do
     compiler.was_deleted?(File.join(Tipsy::Site.compile_to, ".svn")).should == false
   end
-  
-  test "Ensure un-skipped files are removed" do
-    compiler.was_deleted?(File.join(Tipsy::Site.compile_to, "sub-path-with-skip", "fake.txt")).should == true
-  end
-  
-  test "Ensure un-skipped files in folders are removed" do
-    compiler.was_deleted?(File.join(Tipsy::Site.compile_to, "sub-path", "fake.txt")).should == true
-  end
-  
-  test "Ensure un-skipped directories are removed" do
-    compiler.was_deleted?(File.join(Tipsy::Site.compile_to, "sub-path")).should == true
-  end
-  
+   
   test "Ensure templates are created" do
     compiler.was_created?(File.join(Tipsy::Site.compile_to, "sub", "page.html")).should == true
   end

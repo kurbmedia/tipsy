@@ -1,4 +1,5 @@
 require 'find'
+require 'tipsy/view'
 
 module Tipsy
   module Runners
@@ -8,12 +9,11 @@ module Tipsy
       attr_reader :source_path, :dest_path, :scope
       
       def initialize
-        @source_path = config.public_path
-        @dest_path   = config.compile_to
+        @source_path = normalize_path(config.public_path)
+        @dest_path   = normalize_path(config.compile_to)
         excluded     = [excludes, config.compile.preserve].flatten.uniq
         @_excludes   = excluded
         clean_existing!
-        
         [:public, :images, :assets, :templates].each do |m|
           send(:"compile_#{m}!")
         end
@@ -26,14 +26,22 @@ module Tipsy
         Tipsy::Site.config
       end
       
+      def skip_path?(src)
+        return false unless scope == :clean || scope == :public
+      end
+
       def skip_file?(src)
         return false unless scope == :clean || scope == :public
-        check = case scope
-        when :clean  then config.compile.preserve
-        when :public then config.compile.skip
-        else []
+        if scope == :public
+          checks   = config.compile.skip
+          relative = ::Pathname.new(src).relative_path_from(::Pathname.new(source_path))
+          reldir   = relative.dirname.to_s
+          return checks.detect{ |path| path == src || path == relative.to_s || reldir.to_s == path }
         end
-        check.detect{ |path| File.basename(src) == path }
+        config.compile.preserve.detect do |path| 
+          relative = src.to_s.gsub(Tipsy::Site.public_path, '').sub(/^\//, '')
+          File.basename(src) == path || relative == path
+        end
       end
       
       alias :skip_path? :skip_file?
@@ -43,33 +51,23 @@ module Tipsy
       def clean_existing!
         @scope = :clean
         return true unless ::File.directory?(dest_path)
-        ::Find.find(dest_path) do |path|
-          next if path == config.compile_to
-          if ::File.directory?(path)
-            if skip_path?(path)
-              ::Find.prune
-            elsif empty_dir?(path)
-              rm_rf(path)
-              ::Find.prune
-            else
-              next
-            end
-          elsif ::File.exists?(path)
-            unlink(path) unless skip_file?(path)
-          end
-        end
-
-        Dir["#{dest_path}/**/**"].select{ |path| File.directory?(path) }.each do |dir|
-          next if config.compile_to == dir
-          rm_rf(dir) if empty_dir?(dir)
+        tree = Tipsy::Utils::Tree.new(dest_path, source_path)
+        tree.collect!
+        tree.files.each do |file|
+          unlink(file)
         end
         
+        tree.folders.map(&:to_s).sort{ |d1,d2| d2.size<=>d1.size }.each do |dir|
+          rm_rf(dir) if empty_dir?(dir)
+        end
       end
       
       def compile_public!
         @scope = :public
         log_action("copy", "public files")
-        copy_tree(source_path, dest_path)
+        tree = Tipsy::Utils::Tree.new(source_path, dest_path)
+        tree.excludes |= config.compile.skip
+        tree.copy!
       end
       
       def compile_images!
@@ -89,7 +87,7 @@ module Tipsy
         config.compile.assets.each do |file|
           handler.each_logical_path do |path|
             should_compile = path.is_a?(Regexp) ? file.match(path) : File.fnmatch(file.to_s, path)
-            next unless should_compile?
+            next unless should_compile
 
             if asset = handler.find_asset(path)
               log_action("compile", asset.logical_path)            
@@ -106,6 +104,7 @@ module Tipsy
           dir == '.' || dir == ".." || dir[0] == "." || !::File.directory?(dir)
         end
         dirs = dirs.reject do |dir|
+          
           # Skip folders that only have partials or all files/dirs excluded
           ::Dir.entries(dir).reject{ |f| f.to_s[0] == "_" || excluded?(f) }.empty?
         end.push(File.join(Tipsy.root, "views"))
@@ -121,21 +120,23 @@ module Tipsy
             route    = "/#{route.to_s}" unless route.absolute?
             route    = File.join(route.to_s, tpl.split(".").first) unless tpl.to_s.match(/^index/i)
             request  = MockRequest.new(route.to_s)
-            view     = Tipsy::View::Base.new(request, MockResponse.new)            
+            view     = ::Tipsy::View::Base.new(request, MockResponse.new)            
 
             compiled = view.render
             next if view.template.nil?
             proper_name = proper_template_name(view.template)
+            tpl_path    = ::Pathname.new(view.template)
+            relation    = tpl_path.dirname.relative_path_from(::Pathname.new(view_path))
             
             if ::File.directory?(File.join(view_path, request.path))
-              write_to = ::File.join(request.path, proper_name)
+              write_to = ::File.join(request.path, proper_name)                            
             else
               write_to = "#{request.path}#{::File.extname(proper_template_name(view.template))}"
             end
             
+            mkdir_p(::File.join(dest_path, relation.to_s)) unless relation.to_s == "." || relation.to_s == ".."
             log_action("render", request.path)
-            mkdir_p ::File.join(config.compile_to, write_to)
-            make_file(::File.join(config.compile_to, write_to), compiled)
+            make_file(::File.join(config.compile_to, write_to), compiled.body)
           end
         end
       end

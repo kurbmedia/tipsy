@@ -21,6 +21,7 @@ module Tipsy
     autoload :System,     'tipsy/utils/system'
     autoload :SystemTest, 'tipsy/utils/system_test'
     autoload :Logger,     'tipsy/utils/logger'
+    autoload :Tree,       'tipsy/utils/tree'
   end
   
   module Compressors

@@ -91,11 +91,11 @@ module Tipsy
       private
       
       def set_created(path)
-        (@creations ||= []) << path
+        (@creations ||= []) << path.to_s
       end
       
       def set_deleted(path)
-        (@deletions ||= []) << path
+        (@deletions ||= []) << path.to_s
       end
       
     end
