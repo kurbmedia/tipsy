@@ -5,7 +5,7 @@ module Tipsy
   class Site
     include ActiveSupport::Configurable
     config_accessor :asset_path, :compile_to, :css_path, :javascripts_path, :images_path, :fonts_path,
-                    :public_path, :load_paths, :compile_to, :compile
+                    :public_path, :load_paths, :compile_to, :compile, :compass
     ##
     # Site configuration options
     # 
@@ -46,13 +46,26 @@ module Tipsy
     config.compile.enable_rewrite = true
     config.compile.rewrite_mode   = :htaccess
 
+    config.compass                  = ::ActiveSupport::OrderedOptions.new
+    config.compass.images_path      = File.join('assets', 'images')
+    config.compass.sass_dir         = File.join('assets', 'stylesheets')
+    config.compass.http_images_path = "/#{File.basename(config.images_path)}"
+    config.compass.relative_assets  = false
+    config.compass.line_comments    = false
+      
+
     def self.configure!
       @_callbacks = { :before => [], :after => [] }
       local_config = File.join(Tipsy.root, 'config.rb')
       if File.exists?(local_config)
-        class_eval(File.open(local_config).readlines.join("\n"))
+        bind = binding
+        self.class_exec do
+          File.open(local_config).each do |line|
+            next if line.to_s[0] == "#" || line.to_s.strip.blank?
+            eval("config."+ line.to_s, bind, local_config)
+          end
+        end
       end
-      
     end
     
     ##
@@ -79,8 +92,7 @@ module Tipsy
     end
     
     
-    def initialize
-      @_callbacks = {}
+    def initialize      
     end
           
   end

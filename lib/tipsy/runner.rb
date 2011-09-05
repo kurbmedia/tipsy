@@ -25,7 +25,7 @@ module Tipsy
       require 'tipsy/server'
       require 'tipsy/view'
       require 'rack'
-      
+
       app = Rack::Builder.new {
         use Rack::Reloader
         use Rack::ShowStatus

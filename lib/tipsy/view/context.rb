@@ -4,8 +4,7 @@ module Tipsy
     # All views are rendered within a context object. This object handles
     # transitioning data between templates and layouts.
     # 
-    class Context
-      include Tipsy::Helpers
+    class Context      
       attr_reader :request, :template, :layout, :virtual_path, :lookup_context
       
       def initialize(request, template, path, lookup)
@@ -15,6 +14,9 @@ module Tipsy
         @virtual_path   = path
         @lookup_context = lookup
         @output_buffer  = nil
+        self.class_eval do
+          include Tipsy::Helpers
+        end
       end
       
       def layout(set = nil)

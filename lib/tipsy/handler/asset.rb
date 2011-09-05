@@ -73,15 +73,14 @@ module Tipsy
           compass_config = ::Compass::Configuration::Data.new("project")
           compass_config.project_type     = :stand_alone
           compass_config.project_path     = Tipsy.root
-          compass_config.images_dir       = File.join('assets', 'images')
-          compass_config.sass_dir         = File.join('assets', 'stylesheets')
-          compass_config.http_images_path = "/#{File.basename(Tipsy::Site.images_path)}"
-          compass_config.relative_assets  = false
-          compass_config.line_comments    = false
+
+          Tipsy::Site.compass.keys.each do |setting|
+            compass_config.send("#{setting.to_s}=", Tipsy::Site.compass[setting])
+          end
 
           Compass.add_project_configuration(compass_config)
           ::Sass::Plugin.engine_options.merge!(Compass.sass_engine_options)
-          
+
         rescue LoadError
           require 'tipsy/helpers/sass'
         end

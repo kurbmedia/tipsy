@@ -1,6 +1,7 @@
 module Tipsy
   module Helpers
     module Rendering
+      include Tipsy::Helpers::Capture
       
       def render(options = {})
         options.symbolize_keys!
@@ -26,8 +27,8 @@ module Tipsy
         
         unless render_path.nil?
           local_vars = options.delete(:locals) || {}
-          results    = Tilt[render_path].new(render_path, nil)
-          return results.render(self, local_vars)
+          results    = Tilt[render_path].new(render_path, nil, :outvar => "_inline_template")
+          return capture{ results.render(self, local_vars).to_s }
         end
         
         raise "Missing #{ partial ? 'partial' : 'template' } #{to_render}."

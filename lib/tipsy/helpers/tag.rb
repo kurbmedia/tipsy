@@ -8,8 +8,8 @@ module Tipsy
       end
       
       def content_tag(name, content = nil, html_attrs = {}, &capt)
-        buffer = "<#{name}#{make_attributes(html_attrs)}>"
-        content = capture(&capt) if block_given?
+        buffer  = "<#{name}#{make_attributes(html_attrs)}>"
+        content = capture(&capt) if block_given? and content.nil?
         "<#{name}#{make_attributes(html_attrs)}>#{content}</#{name}>"
       end
       
