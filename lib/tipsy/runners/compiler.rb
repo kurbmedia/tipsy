@@ -102,7 +102,42 @@ module Tipsy
       end
       
       def compile_templates!
-        
+        dirs = ::Dir[::File.join(Tipsy.root, "views") << "/**/**"].reject do |dir|
+          dir == '.' || dir == ".." || dir[0] == "." || !::File.directory?(dir)
+        end
+        dirs = dirs.reject do |dir|
+          # Skip folders that only have partials or all files/dirs excluded
+          ::Dir.entries(dir).reject{ |f| f.to_s[0] == "_" || excluded?(f) }.empty?
+        end.push(File.join(Tipsy.root, "views"))
+
+        view_path  = ::File.join(Tipsy.root, "views")
+
+        dirs.each do |path|          
+          templates_in_path(path).each do |tpl|
+            next if ::File.directory?(File.join(path, tpl))
+            
+            route    = ::Pathname.new(path.gsub("#{Tipsy.root}/views", ""))
+            route    = "/" if route.blank?
+            route    = "/#{route.to_s}" unless route.absolute?
+            route    = File.join(route.to_s, tpl.split(".").first) unless tpl.to_s.match(/^index/i)
+            request  = MockRequest.new(route.to_s)
+            view     = Tipsy::View::Base.new(request, MockResponse.new)            
+
+            compiled = view.render
+            next if view.template.nil?
+            proper_name = proper_template_name(view.template)
+            
+            if ::File.directory?(File.join(view_path, request.path))
+              write_to = ::File.join(request.path, proper_name)
+            else
+              write_to = "#{request.path}#{::File.extname(proper_template_name(view.template))}"
+            end
+            
+            log_action("render", request.path)
+            mkdir_p ::File.join(config.compile_to, write_to)
+            make_file(::File.join(config.compile_to, write_to), compiled)
+          end
+        end
       end
       
       def cleanup!
@@ -117,10 +152,32 @@ module Tipsy
         end
       end
       
+      class MockRequest
+        attr_reader :path_info, :path
+        def initialize(p)
+          @path_info, @path = p, p
+        end
+      end
+      
+      class MockResponse
+        attr_accessor :status, :body, :headers
+        def initialize
+          @headers = {}
+        end
+      end
+      
       private
       
+      def templates_in_path(path)
+        ::Dir.entries(path).reject{ |file| file[0] == "_" || ::File.directory?(file) }
+      end
+      
+      def proper_template_name(tpl)
+        ::File.basename(tpl).gsub(/(md|haml|erb|rb|slim)/i, "").gsub(/\.$/, '')        
+      end
+      
       def build_asset_path(asset, file)
-        base =  (file.to_s.match(/\.js$/i) ? :javascripts_path : (file.to_s.match(/\.css$/i) ? :css_path : :images_path) : :images_path)
+        base =  (file.to_s.match(/\.js$/i) ? :javascripts_path : (file.to_s.match(/\.css$/i) ? :css_path : :images_path))
         base = config.send(base)
         path = File.expand_path(File.join(config.compile_to, base))
         mkdir_p(path) unless File.directory?(path)

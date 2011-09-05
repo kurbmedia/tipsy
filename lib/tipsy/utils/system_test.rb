@@ -15,7 +15,7 @@ module Tipsy
       ##
       # Copies from one location to another
       # 
-      def make_file(source, destination)
+      def copy_file(source, destination)
         return true if skip_file?(source)
         set_created(destination)
       end
@@ -23,7 +23,7 @@ module Tipsy
       ##
       # Makes a matching folder in destination from source
       #
-      def make_folder(dirname)
+      def copy_folder(dirname)
         return true if skip_path?(dirname)
         log_action("create", dirname)
         set_created(dirname)
@@ -35,6 +35,10 @@ module Tipsy
       def mkdir_p(path)
         return true if ::File.exists?(path)
         log_action("create", path)
+        set_created(path)
+      end
+      
+      def make_file(path, content)
         set_created(path)
       end
       
@@ -64,10 +68,10 @@ module Tipsy
           destination  = ::File.join(dest, file)
 
           if ::File.directory?(source)
-            make_folder(destination)
+            copy_folder(destination)
             copy_tree(source, destination)
           else
-            make_file(source, destination)
+            copy_file(source, destination)
           end
         end
       end

@@ -17,7 +17,7 @@ module Tipsy
       end
 
       def info(msg)
-        print msg
+        print msg unless Tipsy.env.eql?("test")
       end
 
       def warn(msg)

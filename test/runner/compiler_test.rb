@@ -38,4 +38,12 @@ class CompilerTest < ActiveSupport::TestCase
     compiler.was_deleted?(File.join(Tipsy::Site.compile_to, "sub-path")).should == true
   end
   
+  test "Ensure templates are created" do
+    compiler.was_created?(File.join(Tipsy::Site.compile_to, "sub", "page.html")).should == true
+  end
+  
+  test "Ensure index templates are created" do
+    compiler.was_created?(File.join(Tipsy::Site.compile_to, "sub", "tertiary", "index.html")).should == true
+  end
+  
 end

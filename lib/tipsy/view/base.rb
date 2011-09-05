@@ -2,7 +2,7 @@ module Tipsy
   module View
     class Base
       
-      attr_reader :lookup_context, :request, :response, :view_context
+      attr_reader :lookup_context, :request, :response, :view_context, :template
       
       def initialize(request, response)
         @request  = request
@@ -12,7 +12,12 @@ module Tipsy
       
       def render
         
-        template      = lookup_context.locate_template(current_path)        
+        @template     = lookup_context.locate_template(current_path)
+        
+        if template.nil?
+          return generate_response(nil)
+        end
+        
         @view_context = Tipsy::View::Context.new(request, lookup_context, File.dirname(template), lookup_context)
         
         handler  = Tilt[template]

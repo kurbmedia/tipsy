@@ -1,7 +1,7 @@
 module Tipsy
   module Helpers    
     module Tag
-      include Capture
+      include Tipsy::Helpers::Capture
       
       def tag(name, html_attrs = {}, open = false)
         "<#{name}#{make_attributes(html_attrs)}#{open ? ">" : " />"}"
