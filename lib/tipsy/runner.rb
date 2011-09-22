@@ -65,7 +65,7 @@ module Tipsy
     # @usage From the command line, run `tipsy compile`
     # 
     def compile
-      Tipsy::Runners::Compiler.new
+      Tipsy::Runners::Compiler.new(args, @site)
     end
     
     

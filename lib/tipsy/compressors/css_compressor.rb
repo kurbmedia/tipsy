@@ -4,7 +4,8 @@ module Tipsy
   module Compressors
     class CssCompressor
       def compress(css)
-        Sass::Engine.new(css, :syntax => :scss, :cache => false, :read_cache => false, :style => :compressed).render
+        css_style = Tipsy::Site.config.compile.compress_css ? :compressed : :nested
+        Sass::Engine.new(css, :syntax => :scss, :cache => false, :read_cache => false, :line_comments => false, :style => css_style).render
       end
     end
   end

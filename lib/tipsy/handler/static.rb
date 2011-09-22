@@ -17,6 +17,15 @@ module Tipsy
 
       def call(env)
         pathinfo = env['PATH_INFO']
+        
+        if(File.basename(pathinfo) == "favicon.ico")
+          resp = static.call(env.merge!({ 'PATH_INFO' => pathinfo }))
+          unless 404 == resp[0]
+            resp[1].merge!({ "Pragma" => "nocache", "Cache-Control" => "max-age=0" })
+            return resp
+          end
+        end
+        
         found    = nil
         try_files.each do |path|
           response = static.call(env.merge!({ 'PATH_INFO' => pathinfo + path }))

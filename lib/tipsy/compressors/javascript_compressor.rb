@@ -11,6 +11,7 @@ module Tipsy
     
     module Closure
       def compress(js)
+        return js unless Tipsy::Site.config.compile.compress_javascripts
         return js if js.to_s.blank?
         post_data = {
           'compilation_level' => 'SIMPLE_OPTIMIZATIONS',
@@ -24,6 +25,7 @@ module Tipsy
     
     module Uglifier
       def compress(js)
+        return js unless Tipsy::Site.config.compile.compress_javascripts
         ::Uglifier.compile(js, :max_line_length => 500, :squeeze => true, :copyright => false)
       end
     end

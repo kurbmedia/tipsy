@@ -6,9 +6,10 @@ module Tipsy
     class Compiler
       include Tipsy::Utils::System
       
-      attr_reader :source_path, :dest_path, :scope
+      attr_reader :source_path, :dest_path, :scope, :site
       
-      def initialize
+      def initialize(args, site)
+        @site        = site
         @source_path = normalize_path(config.public_path)
         @dest_path   = normalize_path(config.compile_to)
         excluded     = [excludes, config.compile.preserve].flatten.uniq
@@ -113,7 +114,7 @@ module Tipsy
 
         dirs.each do |path|          
           templates_in_path(path).each do |tpl|
-            next if ::File.directory?(File.join(path, tpl))
+            next if ::File.directory?(File.join(path, tpl)) || ::File.basename(tpl).to_s[0] == "_"
             
             route    = ::Pathname.new(path.gsub("#{Tipsy.root}/views", ""))
             route    = "/" if route.blank?

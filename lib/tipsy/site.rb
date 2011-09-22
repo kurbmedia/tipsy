@@ -41,7 +41,9 @@ module Tipsy
     config.compile.assets    = ['screen.css', 'site.js']
     config.compile.preserve  = [".svn", ".gitignore", ".git"]
     config.compile.skip      = []
-    
+
+    config.compile.compress_css = true
+    config.compile.compress_javascripts = true
     
     config.compile.enable_rewrite = true
     config.compile.rewrite_mode   = :htaccess

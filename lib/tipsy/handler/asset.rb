@@ -20,9 +20,12 @@ module Tipsy
       
       class << self
         def map!
-          fpaths = [:javascripts_path, :css_path, :images_path].collect{ |p| File.basename(Tipsy::Site.send(p)) }
+          fpaths = [:javascripts_path, :css_path, :images_path].collect do |p| 
+            path = ::Pathname.new(Tipsy::Site.send(p))
+            (path.absolute? ? path.to_s : path.to_s.sub(/^\//,''))
+          end
           fpaths.inject({}) do |hash, path|
-            hash.merge!("/#{path}" => self.new)
+            hash.merge!("#{path}" => self.new)
           end
         end
       end
