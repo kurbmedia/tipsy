@@ -11,6 +11,10 @@ module Tipsy
         @dest_path   = File.join(Tipsy.root, site_name)
         ensure_destination
         copy_tree(source_path, dest_path)
+        
+        public_dir = File.join(Tipsy.root, site_name, "public")
+        File.mkdir_p(public_dir) unless ::Dir.exists?(public_dir)
+        
       end
       
       private

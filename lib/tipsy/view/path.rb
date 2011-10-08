@@ -7,7 +7,7 @@ module Tipsy
       def initialize
         super(Tipsy.root)
         append_path('.')
-        append_extensions '.erb','.html', '.json', '.xml'
+        append_extensions '.erb','.html', '.json', '.xml', '.php'
       end
       
       def locate_template(view_path)

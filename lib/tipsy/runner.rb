@@ -25,12 +25,16 @@ module Tipsy
       require 'tipsy/server'
       require 'tipsy/view'
       require 'rack'
-
+      
+      conf = Tipsy::Site.config
+      require 'rack-legacy' if conf.enable_php
+      
       app = Rack::Builder.new {
         use Rack::Reloader
         use Rack::ShowStatus
+        (use Rack::Legacy::Php, Tipsy::Site.config.public_path) if conf.enable_php
         use Rack::ShowExceptions
-        use Tipsy::Handler::StaticHandler, :root => Tipsy::Site.config.public_path, :urls => %w[/]
+        use Tipsy::Handler::StaticHandler, :root => conf.public_path, :urls => %w[/]
         run Rack::Cascade.new([
         	Rack::URLMap.new(Tipsy::Handler::AssetHandler.map!),
         	Tipsy::Server.new

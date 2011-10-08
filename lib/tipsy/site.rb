@@ -54,7 +54,8 @@ module Tipsy
     config.compass.http_images_path = "/#{File.basename(config.images_path)}"
     config.compass.relative_assets  = false
     config.compass.line_comments    = false
-      
+    
+    config.enable_php               = false
 
     def self.configure!
       @_callbacks = { :before => [], :after => [] }

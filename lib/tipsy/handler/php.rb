@@ -26,7 +26,18 @@ module Tipsy
         @data = d
       end
 
-      def render        
+      def render 
+        file   = Tempfile.new("tipsy_php_#{Time.now.to_i}")
+        result = ""
+        begin
+          file.write(@data)
+          file.rewind
+          result = `php #{file.path}`
+        ensure
+          file.close
+          file.unlink
+        end  
+        result
       end
     end
     
