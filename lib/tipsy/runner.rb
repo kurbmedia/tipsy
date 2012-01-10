@@ -27,12 +27,25 @@ module Tipsy
       require 'rack'
       
       conf = Tipsy::Site.config
-      require 'rack-legacy' if conf.enable_php
+      missing_legacy_message = "Rack::Legacy could not be loaded. Add it to your gemfile or set conf.enable_php to false in config.rb"
+      
+      if conf.enable_php
+        begin
+          require 'rack-legacy' 
+        rescue LoadError
+          puts missing_legacy_message
+        end
+      end
       
       app = Rack::Builder.new {
         use Rack::Reloader
         use Rack::ShowStatus
-        (use Rack::Legacy::Php, Tipsy::Site.config.public_path) if conf.enable_php
+        if conf.enable_php
+          begin
+            use Rack::Legacy::Php, Tipsy::Site.config.public_path
+          rescue
+          end
+        end
         use Rack::ShowExceptions
         use Tipsy::Handler::StaticHandler, :root => conf.public_path, :urls => %w[/]
         run Rack::Cascade.new([

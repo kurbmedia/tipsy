@@ -27,8 +27,9 @@ module Tipsy
       
       private
       
-      def make_attributes(hash)
+      def make_attributes(hash = {})
         attrs = []
+        hash ||= {}
         hash.each_pair do |key, value|
           attrs << "#{key}=#{value.inspect}"
         end

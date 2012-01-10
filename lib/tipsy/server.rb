@@ -31,7 +31,7 @@ module Tipsy
             exit(0)
           rescue LoadError
             handler = Rack::Handler.get('webrick')
-            handler.run app, server_opts do |server|
+            handler.run app, options do |server|
               puts "Running Tipsy with Webrick. To use Mongrel or Thin (recommended), add them to your Gemfile"
               trap("INT"){ server.shutdown }
             end
