@@ -10,6 +10,10 @@ module Tipsy
       def excludes
         @_excludes ||= ['.svn', '.git', '.gitignore', '.sass-cache', 'config.erb', '.rb', '.DS_Store']
       end
+      
+      def excludes=(arr)
+        @_excludes = arr
+      end
 
       def excluded?(file, against = nil)
         against ||= excludes

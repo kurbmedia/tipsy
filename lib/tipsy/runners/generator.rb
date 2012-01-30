@@ -5,6 +5,10 @@ module Tipsy
       
       include Tipsy::Utils::System
       
+      def excludes
+        @_excludes ||= ['.svn', '.git', '.gitignore', '.sass-cache', 'config.erb', '.DS_Store']
+      end
+      
       def initialize(args, site)
         @site_name, @site = args.first, site
         @source_path = File.expand_path("../../../templates/site", __FILE__)
