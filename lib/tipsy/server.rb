@@ -19,24 +19,38 @@ module Tipsy
         begin
           handler = Rack::Handler.get('thin')
           handler.run app, options do |server|
-            puts "Running Tipsy with Thin (#{Thin::VERSION::STRING})."
+            banner("Thin (#{Thin::VERSION::STRING})", options[:Port])
+            puts "-----------------------------------------------------------------"
+            puts ""
           end
           exit(0)
         rescue LoadError
           begin
             handler = Rack::Handler.get('mongrel')
             handler.run app, options do |server|
-              puts "Running Tipsy with Mongrel (#{Mongrel::Const::MONGREL_VERSION})."
+              banner("Mongrel (#{Mongrel::Const::MONGREL_VERSION})", options[:Port])
+              puts "-----------------------------------------------------------------"
+              puts ""
             end
             exit(0)
           rescue LoadError
             handler = Rack::Handler.get('webrick')
             handler.run app, options do |server|
-              puts "Running Tipsy with Webrick. To use Mongrel or Thin (recommended), add them to your Gemfile"
+              banner("Webrick", options[:Port])
+              puts " To use Mongrel or Thin (recommended), add them to your Gemfile"
+              puts "-----------------------------------------------------------------"
+              puts ""
               trap("INT"){ server.shutdown }
             end
           end
         end
+      end
+      
+      def banner(server, port)
+        puts ""
+        Tipsy.logger.info " Tipsy #{Tipsy::VERSION}", :green
+        Tipsy.logger.info " Started from #{Tipsy.root}"
+        Tipsy.logger.info " using #{server}, port #{port}"
       end
     end
     

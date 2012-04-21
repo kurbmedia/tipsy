@@ -16,8 +16,8 @@ module Tipsy
         print colorize(:green, (name.rjust(12, ' ') << " "), :clear, action)
       end
 
-      def info(msg)
-        print msg unless Tipsy.env.eql?("test")
+      def info(msg, color = :clear)
+        print colorize(color, msg) unless Tipsy.env.eql?("test")
       end
 
       def warn(msg)
