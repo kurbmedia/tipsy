@@ -2,6 +2,7 @@ require "active_support/all"
 require "tipsy/version"
 
 module Tipsy
+  extend self
   
   module Handler    
     autoload :AssetHandler,    'tipsy/handler/asset'
@@ -29,19 +30,21 @@ module Tipsy
     autoload :CssCompressor,        'tipsy/compressors/css_compressor'
   end
   
-  class << self    
-    def env
-      @env ||= ENV['TIPSY_ENV'] || 'development'
-    end
-    
-    def root
-      @root ||= ENV['TIPSY_ROOT']
-    end
-    
-    def logger
-      @logger ||= Tipsy::Utils::Logger.new($stdout)
-    end    
+  def compiling?
+    Tipsy.env == "compile"
   end
+  
+  def env
+    @env ||= ENV['TIPSY_ENV'] || 'development'
+  end
+  
+  def root
+    @root ||= ENV['TIPSY_ROOT']
+  end
+  
+  def logger
+    @logger ||= Tipsy::Utils::Logger.new($stdout)
+  end    
 
 end
 

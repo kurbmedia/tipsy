@@ -9,6 +9,9 @@ module Tipsy
       attr_reader :source_path, :dest_path, :scope, :site
       
       def initialize(args, site)
+        
+        ENV['TIPSY_ENV'] = "compile"
+        
         @site        = site
         @source_path = normalize_path(config.public_path)
         @dest_path   = normalize_path(config.compile_to)

@@ -31,7 +31,8 @@ module Tipsy
       
       if conf.enable_php
         begin
-          require 'rack-legacy' 
+          require 'rack-legacy'
+          require 'tipsy/handler/php' 
         rescue LoadError
           puts missing_legacy_message
         end
@@ -42,7 +43,8 @@ module Tipsy
         use Rack::ShowStatus
         if conf.enable_php
           begin
-            use Rack::Legacy::Php, Tipsy::Site.config.public_path
+            puts "PHP Enabled"
+            use Rack::Legacy::Php, conf.public_path
           rescue
           end
         end

@@ -34,6 +34,7 @@ module Tipsy
     config.images_path       = asset_path
     config.fonts_path        = "/fonts"
     config.javascripts_path  = asset_path
+    config.view_path         = File.join(Tipsy.root, 'views')
     config.css_path          = asset_path
     config.compile_to        = File.join(Tipsy.root, 'compiled')
     
@@ -51,11 +52,14 @@ module Tipsy
     config.compass                  = ::ActiveSupport::OrderedOptions.new
     config.compass.images_path      = File.join('assets', 'images')
     config.compass.sass_dir         = File.join('assets', 'stylesheets')
+    config.compass.images_dir       = File.join('assets', 'images')
     config.compass.http_images_path = "/#{File.basename(config.images_path)}"
     config.compass.relative_assets  = false
     config.compass.line_comments    = false
     
-    config.enable_php               = false
+    # enables php processing during development. 
+    # at compile time, php code is left in-tact
+    config.enable_php               = false 
 
     def self.configure!
       @_callbacks = { :before => [], :after => [] }
