@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
 
-libdir = File.dirname(__FILE__) + '/../lib'
+libdir = File.expand_path('../lib', File.dirname(__FILE__))
+puts "Load from #{libdir}"
 if File.file?(libdir + '/tipsy/version.rb')
-  $LOAD_PATH.unshift(libdir)
+  $LOAD_PATH.unshift(libdir)  
 end
 
 ENV['TIPSY_ROOT'] ||= File.expand_path('.')
@@ -19,5 +20,5 @@ if File.exists?(File.join(File.expand_path('.'), 'Gemfile'))
   Bundler.require(:default)
 end
 
-require 'tipsy/runner'
+require "#{libdir}/tipsy/runner"
 Tipsy::Runner.new(ARGV, STDIN)

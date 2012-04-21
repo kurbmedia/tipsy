@@ -4,6 +4,8 @@ require "tipsy/version"
 module Tipsy
   extend self
   
+  autoload :Runner, 'tipsy/runner'
+  
   module Handler    
     autoload :AssetHandler,    'tipsy/handler/asset'
     autoload :StaticHandler,   'tipsy/handler/static'
