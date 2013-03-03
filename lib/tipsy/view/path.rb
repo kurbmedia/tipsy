@@ -28,6 +28,10 @@ module Tipsy
         end
       end
       
+      def full_path
+        @_template
+      end
+      
       private 
       
       def with_temporary_scope(*new_scope)

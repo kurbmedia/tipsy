@@ -27,8 +27,8 @@ module Tipsy
       require 'rack'
       
       conf = Tipsy::Site.config
-      missing_legacy_message = "Rack::Legacy could not be loaded. Add it to your gemfile or set conf.enable_php to false in config.rb"
-      
+      missing_legacy_message  = "Rack::Legacy could not be loaded. Add it to your gemfile or set 'enable_php' to false in config.rb"
+      missing_rewrite_message = "Rack::Rewrite could not be loaded. Add it to your gemfile or remove 'rewrite_rules' from config.rb"
       if conf.enable_php
         begin
           require 'rack-legacy'
@@ -41,6 +41,21 @@ module Tipsy
       app = Rack::Builder.new {
         use Rack::Reloader
         use Rack::ShowStatus
+        
+        unless conf.rewrite_rules.empty?
+          begin
+            require 'rack-rewrite'
+            puts "Enabling Rack Rewrite"
+            use Rack::Rewrite do
+              conf.rewrite_rules.each do |pair|
+                rewrite pair.first, pair.last
+              end
+            end
+          rescue LoadError
+            puts missing_rewrite_message
+          end
+        end
+        
         if conf.enable_php
           begin
             puts "PHP Enabled"
@@ -84,7 +99,7 @@ module Tipsy
     # @usage From the command line, run `tipsy compile`
     # 
     def compile
-      Tipsy::Runners::Compiler.new(args, @site)
+      Tipsy::Runners::Compiler.new(@args, @site)
     end
     
     

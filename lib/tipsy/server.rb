@@ -4,7 +4,7 @@ require 'hike'
 module Tipsy  
   ##
   # Rack server implementation.
-  # Tipsy::Server will run any Rack::Builder compatable format. If thin or mongrel
+  # Tipsy::Server will run any Rack::Builder compatable format. If thin or puma
   # are availble, they will be used first, and in that order, with a fallback to webrick.
   # 
   class Server
@@ -26,9 +26,9 @@ module Tipsy
           exit(0)
         rescue LoadError
           begin
-            handler = Rack::Handler.get('mongrel')
+            handler = Rack::Handler.get('puma')
             handler.run app, options do |server|
-              banner("Mongrel (#{Mongrel::Const::MONGREL_VERSION})", options[:Port])
+              banner("Puma (#{Puma::Const::PUMA_VERSION})", options[:Port])
               puts "-----------------------------------------------------------------"
               puts ""
             end
@@ -37,7 +37,7 @@ module Tipsy
             handler = Rack::Handler.get('webrick')
             handler.run app, options do |server|
               banner("Webrick", options[:Port])
-              puts " To use Mongrel or Thin (recommended), add them to your Gemfile"
+              puts " To use Puma or Thin (recommended), add them to your Gemfile"
               puts "-----------------------------------------------------------------"
               puts ""
               trap("INT"){ server.shutdown }

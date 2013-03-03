@@ -1,4 +1,5 @@
 require 'tilt'
+require 'digest/md5'
 
 module Tipsy
   module Handler
@@ -15,32 +16,49 @@ module Tipsy
       end
 
       def evaluate(scope, locals, &block)
+        @engine.template = scope.template.full_path
         @output ||= @engine.render
       end
     end
     
     class PhpProcessor
-      attr_accessor :data
+      attr_accessor :data, :template, :env
 
       def initialize(d)
-        @data = d
+        @data  = d
+        @cname = nil
+        unless Dir.exists?(compile_to)
+          FileUtils.mkdir(compile_to)
+        end
+      end
+      
+      def compile_to
+        File.join(Tipsy.root, '.php-temp')
+      end
+      
+      def cache_name
+        @cname ||= ::Digest::MD5.hexdigest(template.gsub(File.join(Tipsy.root, 'views'), ''))
+      end
+      
+      def tempfile
+        File.join(compile_to, "#{cache_name}.php")
       end
 
-      def render 
-        file   = Tempfile.new("tipsy_php_#{Time.now.to_i}")
-        result = ""
-        begin
-          file.write(@data)
-          file.rewind
-          result = `php #{file.path}`
-        ensure
-          file.close
-          file.unlink
-        end  
-        result
+      def render
+        # if File.exists?(tempfile) && (File.mtime(tempfile) > File.mtime(template))
+        #   return File.read(tempfile)
+        # end
+        puts "PARSE TEMPLATE #{template}"
+        File.open(tempfile, 'w') do |file|
+          file.puts(@data)
+        end
+        ``
+        res = `php #{tempfile}`
+        puts res.to_s
+        res.to_s
       end
+      
     end
-    
   end
 end
 

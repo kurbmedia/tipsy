@@ -21,5 +21,5 @@ require 'tipsy/view/base'
 require 'tipsy/view/context'
 require 'tipsy/view/path'
 
-#Tipsy::View.register_handler(Tipsy::Handler::PhpHandler, 'php.erb')
+#Tipsy::View.register_handler(Tipsy::Handler::PhpHandler, 'php')
 Tipsy::View.register_handler(Tipsy::Handler::ErbHandler, 'erb')

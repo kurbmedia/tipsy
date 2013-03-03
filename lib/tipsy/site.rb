@@ -56,10 +56,14 @@ module Tipsy
     config.compass.http_images_path = "/#{File.basename(config.images_path)}"
     config.compass.relative_assets  = false
     config.compass.line_comments    = false
+  
     
     # enables php processing during development. 
     # at compile time, php code is left in-tact
     config.enable_php               = false 
+    
+    # enables rack-rewriting
+    config.rewrite_rules            = []
 
     def self.configure!
       @_callbacks = { :before => [], :after => [] }

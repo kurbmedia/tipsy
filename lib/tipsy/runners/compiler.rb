@@ -11,14 +11,13 @@ module Tipsy
       def initialize(args, site)
         
         ENV['TIPSY_ENV'] = "compile"
-        
         @site        = site
         @source_path = normalize_path(config.public_path)
         @dest_path   = normalize_path(config.compile_to)
         excluded     = [excludes, config.compile.preserve].flatten.uniq
         @_excludes   = excluded
         clean_existing!
-        [:public, :images, :assets, :templates].each do |m|
+        requested_compilers(args).each do |m|
           send(:"compile_#{m}!")
         end
         
@@ -28,6 +27,19 @@ module Tipsy
       
       def config
         Tipsy::Site.config
+      end
+      
+      def requested_compilers(args)
+        args = [args].flatten.compact
+        return [:public, :images, :assets, :templates] if args.empty?
+        args.map!{ |a| a.to_s.strip.gsub(/^[-]+/, '') }
+        comps = []
+        comps.push('templates') if args.include?('html')
+        args.each do |arg|
+          next unless self.private_methods.include?(:"compile_#{arg.to_s}!")
+          comps << arg
+        end
+        comps
       end
       
       def skip_path?(src)
